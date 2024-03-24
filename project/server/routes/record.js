@@ -6,79 +6,54 @@ import db from "../db/connection.js";
 // This help convert the id from string to ObjectId for the _id.
 import { ObjectId } from "mongodb";
 
+import input from "../inputs/input_validation.js"
+
 // router is an instance of the express router.
 // We use it to define our routes.
 // The router will be added as a middleware and will take control of requests starting with path /record.
 const router = express.Router();
 
-// This section will help you get a list of all the records.
-router.get("/", async (req, res) => {
-  let collection = await db.collection("records");
-  let results = await collection.find({}).toArray();
-  res.send(results).status(200);
+router.post("/users", async (req, res) => {
+  try {
+    
+    // Define the user object with the provided data
+    const newUser = {
+      username: req.body.username,
+      email: req.body.email,
+      password: req.body.password,
+      groups: req.body.groups
+        // Initialize groups as an empty array
+    };
+    
+    let collection = await db.collection("allUsers");
+    // Insert the user object into the "users" collection
+    let result = await collection.insertOne(newUser);
+    
+    // Respond with the inserted user object
+    res.status(201).json({ message: "User added successfully", user: newUser });
+  } catch (error) {
+    console.error("Error adding user:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
-// This section will help you get a single record by id
-router.get("/:id", async (req, res) => {
-  let collection = await db.collection("records");
-  let query = { _id: new ObjectId(req.params.id) };
+router.get("/username/:username", async (req, res) => {
+  let collection = db.collection("allUsers");
+  let query = { username: req.params.username};
   let result = await collection.findOne(query);
 
   if (!result) res.send("Not found").status(404);
   else res.send(result).status(200);
 });
 
-// This section will help you create a new record.
-router.post("/", async (req, res) => {
-  try {
-    let newDocument = {
-      name: req.body.name,
-      position: req.body.position,
-      level: req.body.level,
-    };
-    let collection = await db.collection("records");
-    let result = await collection.insertOne(newDocument);
-    res.send(result).status(204);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error adding record");
-  }
-});
+// Route to check if an email is already registered
+router.get("/email/:email", async (req, res) => {
+  let collection = db.collection("allUsers");
+  let query = { email: req.params.email};
+  let result = await collection.findOne(query);
 
-// This section will help you update a record by id.
-router.patch("/:id", async (req, res) => {
-  try {
-    const query = { _id: new ObjectId(req.params.id) };
-    const updates = {
-      $set: {
-        name: req.body.name,
-        position: req.body.position,
-        level: req.body.level,
-      },
-    };
-
-    let collection = await db.collection("records");
-    let result = await collection.updateOne(query, updates);
-    res.send(result).status(200);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error updating record");
-  }
-});
-
-// This section will help you delete a record
-router.delete("/:id", async (req, res) => {
-  try {
-    const query = { _id: new ObjectId(req.params.id) };
-
-    const collection = db.collection("records");
-    let result = await collection.deleteOne(query);
-
-    res.send(result).status(200);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error deleting record");
-  }
+  if (!result) res.send("Not found").status(404);
+  else res.send(result).status(200);
 });
 
 export default router;
