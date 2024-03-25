@@ -1,5 +1,3 @@
-// validator.js
-
 // Function to validate the username
 const validateUsername = async (username) => {
     // Check if username is null or empty
@@ -12,15 +10,22 @@ const validateUsername = async (username) => {
     }
 
     try {
-        const response = await fetch(`/user/username/${username}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+        const response = await fetch(`http://localhost:5050/username/${username}`);
+        if (response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        return await response.json();
-      } catch (error) {
-        console.error("Error checking username:", error);
-        throw error;
-      }
+    } catch (error) {
+        if (error instanceof TypeError) {
+            // Network error or failed to fetch
+            console.error("Network error:", error);
+            throw new Error("Failed to fetch username information");
+        } else if (error instanceof Error) {
+            // Username exists in the database
+            console.error("Error checking username:", error.message);
+            throw new Error("Username exists in the database");
+        }
+    }
+    
 
     
   };
@@ -41,13 +46,12 @@ const validateUsername = async (username) => {
       throw new Error("Invalid email format");
     }
     try {
-        const response = await fetch(`/user/email/${email}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+        const response = await fetch(`http://localhost:5050/username/${email}`);
+        if (response.status == 200){
+            throw new Error("email exists in the database!");
         }
-        return await response.json();
       } catch (error) {
-        console.error("Error checking email:", error);
+        console.error("email exists:", error);
         throw error;
       }
   };
@@ -66,7 +70,7 @@ const validateUsername = async (username) => {
   };
   
   // Function to validate username, email, password, and confirm password
-  const validateUserRegistration = async (username, email, password, confirmPassword) => {
+  export const validateUserRegistration = async (username, email, password, confirmPassword) => {
     try {
       await validateUsername(username);
       await validateEmail(email);
@@ -108,5 +112,4 @@ const validateUsername = async (username) => {
   }
 
   
-  export default { validateUserRegistration };
-  
+    export default {validateUserRegistration}

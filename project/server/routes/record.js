@@ -41,9 +41,12 @@ router.get("/username/:username", async (req, res) => {
   let collection = db.collection("allUsers");
   let query = { username: req.params.username};
   let result = await collection.findOne(query);
-
-  if (!result) res.send("Not found").status(404);
-  else res.send(result).status(200);
+  console.log(result);
+  if (!result) {
+    res.status(404).send("Not found"); // Send a bad request status if username not found
+  } else {
+    res.send(result).status(200);
+  }
 });
 
 // Route to check if an email is already registered
